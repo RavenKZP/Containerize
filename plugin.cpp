@@ -60,15 +60,18 @@ public:
                                           RE::BSTEventSource<SKSE::CrosshairRefEvent>*) {
 
         if (!event->crosshairRef) return RE::BSEventNotifyControl::kContinue;
-        if (event->crosshairRef->IsActivationBlocked()) return RE::BSEventNotifyControl::kContinue;
         if (event->crosshairRef->extraList.GetCount()>1) return RE::BSEventNotifyControl::kContinue;
+        if (!M->RefIsContainer(event->crosshairRef.get())) return RE::BSEventNotifyControl::kContinue;
+        if (event->crosshairRef->IsActivationBlocked() && !M->isUninstalled) return RE::BSEventNotifyControl::kContinue;
 
         //logger::info("Crosshair is over {}", event->crosshairRef->GetBaseObject()->GetName());
         
-        if (M->RefIsContainer(event->crosshairRef.get())) {
-			event->crosshairRef->SetActivationBlocked(1);
-            //logger::info("Ref activation disabled");
-		}
+        if (M->isUninstalled) {
+            event->crosshairRef->SetActivationBlocked(0);
+        } else {
+            event->crosshairRef->SetActivationBlocked(1);
+            // logger::info("Ref activation disabled");
+        }
         return RE::BSEventNotifyControl::kContinue;
     }
     
