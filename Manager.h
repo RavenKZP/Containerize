@@ -1741,7 +1741,7 @@ public:
 
         bool no_match;
         FormID realcontForm; RefID chestRef; FormID fakecontForm; RefID contRef;
-        std::map<RefID, FormID> unmathced_chests;
+        std::map<RefID, FormFormID> unmathced_chests;
         for (const auto& [realcontForm_chestRef, fakecontForm_contRef] : m_Data) {
             no_match = true;
             realcontForm = realcontForm_chestRef.outerKey;
@@ -1766,18 +1766,34 @@ public:
                     break;
                 }
             }
-            if (no_match) unmathced_chests[chestRef] = realcontForm;
+            if (no_match) unmathced_chests[chestRef] = {realcontForm, fakecontForm};
         }
 
         // handle the unmathced chests
         // user probably changed the INI. we try to retrieve the items.
-        for (const auto& [chestRef_, realcontForm_] : unmathced_chests) {
-            logger::warn("FormID {} not found in sources.", realcontForm_);
+        for (const auto& [chestRef_, RealFakeForm_] : unmathced_chests) {
+            logger::warn("FormID {} not found in sources.", RealFakeForm_.outerKey);
             if (_other_settings[Settings::otherstuffKeys[0]]) {
-                Utilities::MsgBoxesNotifs::InGame::ProblemWithContainer(std::to_string(realcontForm_));
+                Utilities::MsgBoxesNotifs::InGame::ProblemWithContainer(std::to_string(RealFakeForm_.outerKey));
             }
-            DeRegisterChest(chestRef_);
-            m_Data.erase({realcontForm_, chestRef_});
+            logger::info("Deregistering chest");
+            
+            auto chest = RE::TESForm::LookupByID<RE::TESObjectREFR>(chestRef_);
+            if (!chest) return RaiseMngrErr("Chest not found");
+            RemoveAllItemsFromChest(chest, true);
+            // also remove the associated fake item from player or unowned chest
+            auto fake_id = RealFakeForm_.innerKey;
+            if (fake_id) {
+                RemoveItemReverse(player_ref, nullptr, fake_id, RE::ITEM_REMOVE_REASON::kRemove);
+                RemoveItemReverse(unownedChestOG, nullptr, fake_id, RE::ITEM_REMOVE_REASON::kRemove);
+            }
+            // make sure no item is left in the chest
+            if (chest->GetInventory().size()) {
+                logger::critical("Chest still has items in it. Degistering failed");
+                Utilities::MsgBoxesNotifs::InGame::CustomErrMsg("Items might not have been retrieved successfully.");
+            }
+ 
+            m_Data.erase({RealFakeForm_.outerKey, chestRef_});
 		}
 
         Print();
