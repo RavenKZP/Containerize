@@ -646,15 +646,21 @@ class Manager : public Utilities::BaseFormRefIDFormRefIDX {
             return ref_handle;
         }
         listen_container_change = false;
+        logger::info("Removing item with formid {}", item_id);
         auto inventory = moveFrom->GetInventory();
+        logger::info("Looping through inventory");
         for (auto item = inventory.rbegin(); item != inventory.rend(); ++item) {
             auto item_obj = item->first;
+            logger::info("Item formid {} and name {}", item_obj->GetFormID(), item_obj->GetName());
             if (item_obj->GetFormID() == item_id) {
+                logger::info("Item found with formid {} and name {}", item_obj->GetFormID(), item_obj->GetName());
                 auto inv_data = item->second.second.get();
                 auto asd = inv_data->extraLists;
                 if (!asd || asd->empty()) {
+                    logger::info("Removing item without extra data");
                     ref_handle = moveFrom->RemoveItem(item_obj, 1, reason, nullptr, moveTo);
                 } else {
+                    logger::info("Removing item with extra data");
                     ref_handle = moveFrom->RemoveItem(item_obj, 1, reason, asd->front(), moveTo);
                 }
                 listen_container_change = true;
@@ -662,6 +668,7 @@ class Manager : public Utilities::BaseFormRefIDFormRefIDX {
             }
         }
         listen_container_change = true;
+        logger::info("Item not found");
         return ref_handle;
     }
 
@@ -813,8 +820,9 @@ class Manager : public Utilities::BaseFormRefIDFormRefIDX {
             if (!player_inventory_.count(RE::TESForm::LookupByID<RE::TESBoundObject>(fake_container_id))) {
                 return RaiseMngrErr("Fake container not found in player's inventory");
 			}
-
             auto fake_refhandle = RemoveItemReverse(player_ref, nullptr, fake_container_id, RE::ITEM_REMOVE_REASON::kDropping);
+            if (!fake_refhandle) logger::error("Failed to remove fake container from player's inventory");
+            if (!fake_refhandle.get()) logger::error("Failed to remove fake container from player's inventory");
             if (!fake_refhandle.get().get())
                 return RaiseMngrErr("Failed to remove fake container from player's inventory");
             logger::info("Updating extras");
