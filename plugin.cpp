@@ -532,6 +532,26 @@ void InitializeSerialization() {
     SKSE::log::trace("Cosave serialization initialized.");
 }
 
+void SetupLog() {
+    auto pluginName = SKSE::PluginDeclaration::GetSingleton()->GetName();
+#ifndef NDEBUG
+    auto fileLoggerPtr = std::make_shared<spdlog::sinks::msvc_sink_mt>();
+    const auto level = spdlog::level::trace;
+#else
+    const auto level = spdlog::level::info;
+    auto logsFolder = SKSE::log::log_directory();
+    if (!logsFolder) SKSE::stl::report_and_fail("SKSE log_directory not provided, logs disabled.");
+    auto logFilePath = *logsFolder / std::format("{}.log", pluginName);
+    auto fileLoggerPtr = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFilePath.string(), true);
+#endif
+    auto loggerPtr = std::make_shared<spdlog::logger>("log", std::move(fileLoggerPtr));
+    // spdlog::set_level(spdlog::level::trace);
+    spdlog::set_level(level);
+    spdlog::flush_on(level);
+    spdlog::set_default_logger(std::move(loggerPtr));
+    logger::info("Name of the plugin is {}.", pluginName);
+}
+
 
 SKSEPluginLoad(const SKSE::LoadInterface *skse) {
 

@@ -4,7 +4,7 @@
 #include "SKSE/SKSE.h"
 
 using namespace std::literals;
-
+namespace logger = SKSE::log;
 
 namespace RE {
 
