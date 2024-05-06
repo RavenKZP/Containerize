@@ -1075,7 +1075,8 @@ class Manager : public Utilities::SaveLoadData {
             auto bound_ = src.GetBoundObject();
             if (!form_ || !bound_) {
                 init_failed = true;
-                logger::error("Failed to initialize Manager due to missing source: {}",src.formid);
+                logger::error("Failed to initialize Manager due to missing source formid: {} ",src.formid);
+                logger::error("Failed to initialize Manager due to missing source editorid: {} ",src.editorid);
                 break;
             }
             auto formtype_ = RE::FormTypeToString(form_->GetFormType());
