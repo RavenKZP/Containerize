@@ -1947,7 +1947,7 @@ public:
 
         while (chest->GetWeightInContainer() > weight_limit) {
             auto inventory = chest->GetInventory();
-            auto item = inventory.rbegin();
+            auto item = inventory.rend();
             auto item_obj = item->first;
             auto inv_data = item->second.second.get();
             auto asd = inv_data->extraLists;
